@@ -760,7 +760,7 @@ public class BaseDeployer implements AutoDeployer, Deployer {
 				Paths.get(SystemProperties.get(SystemProperties.TMP_DIR)),
 				null);
 
-			File tempDir = tempDirPath.toFile();
+			File tempDir = new File(tempDirPath.toFile(), deployDir.getName());
 
 			excludes += "/WEB-INF/web.xml";
 
