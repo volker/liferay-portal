@@ -23,6 +23,8 @@ import com.liferay.portal.kernel.util.URLCodec;
 import java.io.File;
 import java.io.IOException;
 
+import java.lang.reflect.Method;
+
 import java.net.JarURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -144,6 +146,40 @@ public class JspJavaFileObjectResolver implements JavaFileObjectResolver {
 			URL jarFileURL = jarURLConnection.getJarFileURL();
 
 			fileName = jarFileURL.getFile();
+		}
+		else if (Objects.equals(url.getProtocol(), "bundle")) {
+
+			// Felix (as in Glassfish 4) uses a custom protocol
+			// ('bundle') to represent JAR files.
+
+			// URLHandlersBundleURLConnection does not extend
+			// JarURLConnection, unfortunately.
+
+			try {
+				Method m = urlConnection.getClass().getDeclaredMethod("getLocalURL");
+				m.setAccessible(true);
+
+				URL localURL = (URL) m.invoke(urlConnection);
+
+				fileName = localURL.getFile();
+
+				String protocol = "file:";
+
+				int index = fileName.indexOf(protocol);
+
+				if (index > -1) {
+					fileName = fileName.substring(protocol.length());
+				}
+
+				index = fileName.indexOf('!');
+
+				if (index > -1) {
+					fileName = fileName.substring(0, index);
+				}
+			}
+			catch (Exception ex) {
+				_logger.log(Logger.LOG_ERROR, ex.getMessage(), ex);
+			}
 		}
 		else if (Objects.equals(url.getProtocol(), "vfs")) {
 
